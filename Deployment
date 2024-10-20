@@ -1,0 +1,52 @@
+Carry out all below as sudo su -
+---------------------------------------------------------------
+#### Docker Section
+curl -sSL https://get.docker.com | sh
+sudo apt install docker-compose -y
+sudo usermod -aG docker $USER
+
+#### Turn Off Swap
+sudo swapon (-a) --show
+	sudo swapoff (-a)--show
+
+#### remap k to kubectl
+	nano ~/.bashrc
+	alias k='kubectl'
+	source ~/.bashrc
+#### Add Cgroups
+	sudo nano /boot/firmware/cmdline.txt
+			cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1 swapaccount=1
+
+#### Add Daemon.json 
+sudo nano /etc/docker/daemon.json
+		{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+
+#### Installing K3s on the Master Node
+
+Install K3s on the master-node
+curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" sh -s
+#### Get the Token
+sudo cat /var/lib/rancher/k3s/server/token
+
+#### Configure KUBECTL
+$ mkdir ~/.kube
+$ sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config && sudo chown $USER ~/.kube/config
+$ sudo chmod 600 ~/.kube/config && export KUBECONFIG=~/.kube/config
+
+#### Testing
+$ kubectl get nodes
+$ kubectl cluster-info
+
+#### NFS Mounting
+1. sudo apt install nfs-common -y
+2. 172.25.15.100:/volume1/K3s-Drive /mnt/storage nfs x-systemd.automount 0 0
+
+Adding Worker Nodes
+sudo curl -sfL https://get.k3s.io | K3S_URL=https://172.25.15.50:6443 K3S_TOKEN=K10ee510bf6d26ce8831915d65f6639e773adda12eb8d6d64ff65823d97d351e5a8::server:6af153ae9224509f7182a36f29eddbe9 sh -
